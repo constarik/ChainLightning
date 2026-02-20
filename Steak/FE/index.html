@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>⚡ Lightning Surge v1.20 ⚡</title>
+  <title>⚡ Lightning Surge v1.21 ⚡</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     
@@ -758,7 +758,7 @@
     <div class="bet-info" id="replayBetInfo"></div>
   </div>
   
-  <div class="mode-indicator" id="modeIndicator">Initializing...</div>
+  <div class="mode-indicator" id="modeIndicator"></div>
   
   <div class="stats">
     <div class="stat">Balance: <span class="stat-value" id="balance">-</span></div>
@@ -1944,18 +1944,18 @@ async function init() {
   console.log('[Init] isRgsMode:', isRgsMode);
   
   if (isRgsMode) {
-    modeEl.textContent = 'Connecting to RGS...';
+    modeEl.textContent = '';
     const authSuccess = await rgsAuthenticate();
     if (authSuccess) {
       modeEl.textContent = '';
       modeEl.className = 'mode-indicator rgs';
       document.getElementById('spinBtn').disabled = false;
     } else {
-      modeEl.textContent = '🔴 RGS Connection Failed';
+      modeEl.textContent = '';
       modeEl.className = 'mode-indicator error';
     }
   } else {
-    modeEl.textContent = '🟡 Demo Mode';
+    modeEl.textContent = '';
     modeEl.className = 'mode-indicator demo';
     balance = 1000 * AMOUNT_MULTIPLIER;
     currentBetAmount = 1 * AMOUNT_MULTIPLIER;
@@ -1982,9 +1982,8 @@ async function init() {
     updateBetDisplay();
     
     // Update mode indicator
-    modeEl.textContent = '🔄 REPLAY MODE';
+    modeEl.textContent = '';
     modeEl.className = 'mode-indicator';
-    modeEl.style.color = '#ff6b00';
     
     // Hide balance in replay mode
     document.getElementById('balance').textContent = '---';
