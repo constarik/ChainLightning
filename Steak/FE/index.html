@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>⚡ Lightning Surge v1.22 ⚡</title></title>
+  <title>⚡ Lightning Surge v1.23 ⚡</title></title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     
@@ -927,7 +927,7 @@ const AMOUNT_MULTIPLIER = 1000000;
 const urlParams = new URLSearchParams(window.location.search);
 const sessionID = urlParams.get('sessionID');
 const rgsUrlParam = urlParams.get('rgs_url');
-const currency = urlParams.get('currency') || 'USD';
+let currency = urlParams.get('currency') || 'USD';
 const lang = urlParams.get('lang') || 'en';
 const isDemo = urlParams.get('demo') === 'true';
 
