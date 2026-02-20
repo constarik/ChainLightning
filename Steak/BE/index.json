@@ -1,0 +1,10 @@
+{
+    "modes": [
+        {
+            "name": "lightningsurge",
+            "cost": 1.0,
+            "events": "events_lightningsurge.jsonl.zst",
+            "weights": "lookUpTable_lightningsurge.csv"
+        }
+    ]
+}

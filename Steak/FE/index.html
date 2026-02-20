@@ -1,0 +1,2045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>⚡ Lightning Surge v1.20 ⚡</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    html, body {
+      overflow: hidden;
+      height: 100%;
+      touch-action: manipulation;
+    }
+    body {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #fff;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      text-shadow: 0 0 20px #00d4ff, 0 0 40px #00d4ff;
+      letter-spacing: 3px;
+    }
+    
+    .mode-indicator {
+      margin-bottom: 15px;
+      font-size: 0.9rem;
+      color: #aaa;
+    }
+    
+    .mode-indicator.rgs { color: #4f4; }
+    .mode-indicator.demo { color: #ff0; }
+    .mode-indicator.error { color: #f44; }
+    
+    .stats {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 15px;
+      font-size: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    
+    .stat {
+      background: rgba(255,255,255,0.1);
+      padding: 8px 15px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.2);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .bet-btn {
+      width: 22px;
+      height: 22px;
+      border: none;
+      border-radius: 4px;
+      background: #0077ff;
+      color: white;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+    
+    .bet-btn:hover {
+      background: #0099ff;
+    }
+    
+    .bet-btn:disabled {
+      background: #444;
+      cursor: not-allowed;
+    }
+    
+    /* Modal styles */
+    .modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .modal-content {
+      background: linear-gradient(145deg, #1a1a3a, #0d0d1a);
+      border: 2px solid #0077ff;
+      border-radius: 16px;
+      padding: 24px;
+      max-width: 600px;
+      max-height: 80vh;
+      overflow-y: auto;
+      color: white;
+    }
+    
+    .modal-close {
+      float: right;
+      font-size: 28px;
+      cursor: pointer;
+      color: #888;
+    }
+    
+    .modal-close:hover {
+      color: white;
+    }
+    
+    .modal-content h2 {
+      text-align: center;
+      color: #ffd700;
+      margin-bottom: 16px;
+    }
+    
+    .modal-content h3 {
+      color: #00d4ff;
+      margin: 16px 0 8px;
+      border-bottom: 1px solid #333;
+      padding-bottom: 4px;
+    }
+    
+    .modal-content ul {
+      margin-left: 20px;
+    }
+    
+    .modal-content li {
+      margin: 4px 0;
+    }
+    
+    .paytable {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 8px 0;
+      font-size: 0.85rem;
+    }
+    
+    .paytable th, .paytable td {
+      border: 1px solid #333;
+      padding: 6px;
+      text-align: center;
+    }
+    
+    .paytable th {
+      background: #0077ff;
+    }
+    
+    .paytable td:first-child {
+      text-align: left;
+    }
+    
+    .stat-value {
+      font-weight: bold;
+      color: #00d4ff;
+      font-size: 1.1rem;
+    }
+    
+    .main-area {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    
+    .left-panel {
+      width: 180px;
+      min-height: 300px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 10px;
+      padding: 12px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .left-panel h3 {
+      color: #00d4ff;
+      margin-bottom: 8px;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+    }
+    
+    .chain-list {
+      font-size: 0.8rem;
+      line-height: 1.5;
+    }
+    
+    .chain-list div {
+      padding: 2px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    
+    .no-win {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #ff6b6b;
+      text-align: center;
+      margin-top: 40px;
+    }
+    
+    .grid-container {
+      background: rgba(0,0,0,0.4);
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 0 25px rgba(0,212,255,0.3);
+      position: relative;
+    }
+    
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(6, 55px);
+      grid-template-rows: repeat(5, 55px);
+      gap: 4px;
+    }
+    
+    .cell {
+      width: 55px;
+      height: 55px;
+      background: linear-gradient(145deg, #2a2a4a, #1a1a3a);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      border: 2px solid #333;
+      transition: all 0.15s ease;
+      position: relative;
+    }
+    
+    .cell.wild {
+      background: linear-gradient(145deg, #ffd700, #ff8c00);
+      box-shadow: 0 0 12px rgba(255,215,0,0.5);
+    }
+    
+    .cell.struck {
+      animation: strike 0.3s ease-out;
+      border-color: #00d4ff;
+      box-shadow: 0 0 15px #00d4ff;
+      z-index: 10;
+    }
+    
+    .cell.chain {
+      background: linear-gradient(145deg, #00d4ff, #0077ff);
+      border-color: #fff;
+      box-shadow: 0 0 12px #00d4ff;
+    }
+    
+    .chain-number {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      background: #ffd700;
+      color: #000;
+      font-size: 0.7rem;
+      font-weight: bold;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+    
+    .miss-marker {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 1.8rem;
+      opacity: 0.7;
+      z-index: 10;
+    }
+    
+    @keyframes strike {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.15); background: #fff; }
+      100% { transform: scale(1); }
+    }
+    
+    .wild-mode-banner {
+      color: #ffd700;
+      font-weight: bold;
+      font-size: 1rem;
+      text-align: center;
+      margin-bottom: 8px;
+      text-shadow: 0 0 10px rgba(255,215,0,0.5);
+      min-height: 24px;
+    }
+    
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    
+    button {
+      background: linear-gradient(145deg, #00d4ff, #0077ff);
+      border: none;
+      color: #fff;
+      padding: 12px 30px;
+      font-size: 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 15px rgba(0,212,255,0.4);
+    }
+    
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0,212,255,0.6);
+    }
+    
+    button:disabled {
+      background: #555;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+    
+    button.stop {
+      background: linear-gradient(145deg, #ff6b6b, #cc5555);
+    }
+    
+    .win-display {
+      font-size: 1.8rem;
+      min-height: 40px;
+      color: #ffd700;
+      text-shadow: 0 0 10px #ffd700;
+      font-weight: bold;
+      text-align: center;
+      margin-top: 10px;
+    }
+    
+    .error-display {
+      color: #f44;
+      font-size: 0.9rem;
+      margin-top: 10px;
+      text-align: center;
+      min-height: 20px;
+    }
+    
+    .replay-banner {
+      background: linear-gradient(90deg, #ff6b00, #ff9500);
+      color: #000;
+      padding: 8px 15px;
+      border-radius: 5px;
+      font-weight: bold;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    .replay-banner .bet-info {
+      font-size: 12px;
+      margin-top: 3px;
+    }
+    .replay-btn {
+      background: #ff6b00;
+      color: #000;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .replay-btn:hover {
+      background: #ff9500;
+    }
+    
+    /* Mobile responsive */
+    @media (max-width: 768px) {
+      body {
+        padding: 5px;
+        justify-content: flex-start;
+        gap: 5px;
+      }
+      h1 {
+        margin-bottom: 3px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 1.4rem;
+        margin-bottom: 3px;
+      }
+      .mode-indicator {
+        margin-bottom: 5px;
+        font-size: 0.75rem;
+      }
+      .stats {
+        gap: 10px;
+        font-size: 0.85rem;
+        margin-bottom: 5px;
+      }
+      .grid-container {
+        padding: 8px;
+      }
+      .grid {
+        grid-template-columns: repeat(6, 42px);
+        grid-template-rows: repeat(5, 42px);
+        gap: 3px;
+      }
+      .cell {
+        width: 42px;
+        height: 42px;
+        font-size: 1.2rem;
+      }
+      .cell-number {
+        font-size: 0.5rem;
+        padding: 1px 2px;
+      }
+      .win-display {
+        font-size: 1.1rem;
+        min-height: 25px;
+        margin-top: 5px;
+      }
+      .controls {
+        gap: 8px;
+        margin-top: 5px;
+      }
+      .controls button {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+      }
+      #spinBtn {
+        padding: 10px 20px;
+        font-size: 0.95rem;
+      }
+      .modal-content {
+        padding: 15px;
+        max-height: 70vh;
+      }
+      .paytable {
+        font-size: 0.7rem;
+      }
+    }
+    
+    @media (max-width: 360px) {
+      h1 {
+        font-size: 1.1rem;
+        white-space: nowrap;
+        margin-bottom: 2px;
+      }
+      .mode-indicator {
+        font-size: 0.7rem;
+        margin-bottom: 3px;
+      }
+      .stats {
+        font-size: 0.8rem;
+        gap: 8px;
+      }
+      .grid-container {
+        padding: 5px;
+      }
+      .grid {
+        grid-template-columns: repeat(6, 36px);
+        grid-template-rows: repeat(5, 36px);
+        gap: 2px;
+      }
+      .cell {
+        width: 36px;
+        height: 36px;
+        font-size: 1rem;
+      }
+      .win-display {
+        font-size: 1rem;
+        min-height: 20px;
+      }
+      .controls button {
+        padding: 6px 10px;
+        font-size: 0.8rem;
+      }
+      #spinBtn {
+        padding: 8px 16px;
+        font-size: 0.9rem;
+      }
+    }
+    
+    /* Landscape / Popout modes - limited height */
+    @media (max-height: 700px) {
+      html, body {
+        overflow: hidden;
+      }
+      body {
+        padding: 10px;
+        gap: 5px;
+        justify-content: flex-start;
+      }
+      h1 {
+        font-size: 1.5rem;
+        margin-bottom: 5px;
+      }
+      .mode-indicator {
+        margin-bottom: 5px;
+        font-size: 0.8rem;
+      }
+      .stats {
+        margin-bottom: 8px;
+        font-size: 0.9rem;
+      }
+      .left-panel {
+        display: none;
+      }
+      .grid-container {
+        padding: 10px;
+      }
+      .grid {
+        grid-template-columns: repeat(6, 48px);
+        grid-template-rows: repeat(5, 48px);
+        gap: 3px;
+      }
+      .cell {
+        width: 48px;
+        height: 48px;
+        font-size: 1.4rem;
+      }
+      .win-display {
+        font-size: 1.3rem;
+        min-height: 30px;
+        margin-top: 8px;
+      }
+      .controls {
+        margin-top: 8px;
+        gap: 8px;
+      }
+      .controls button {
+        padding: 8px 16px;
+        font-size: 0.9rem;
+      }
+    }
+    
+    @media (max-height: 550px) {
+      html, body {
+        overflow: hidden;
+      }
+      body {
+        padding: 5px;
+        gap: 3px;
+        justify-content: flex-start;
+      }
+      h1 {
+        font-size: 1.2rem;
+        margin-bottom: 3px;
+      }
+      .mode-indicator {
+        margin-bottom: 3px;
+        font-size: 0.7rem;
+      }
+      .stats {
+        margin-bottom: 5px;
+        font-size: 0.8rem;
+        gap: 10px;
+      }
+      .stat {
+        padding: 4px 8px;
+      }
+      .left-panel {
+        display: none;
+      }
+      .grid-container {
+        padding: 6px;
+      }
+      .grid {
+        grid-template-columns: repeat(6, 40px);
+        grid-template-rows: repeat(5, 40px);
+        gap: 2px;
+      }
+      .cell {
+        width: 40px;
+        height: 40px;
+        font-size: 1.1rem;
+      }
+      .win-display {
+        font-size: 1.1rem;
+        min-height: 25px;
+        margin-top: 5px;
+      }
+      .controls {
+        margin-top: 5px;
+        gap: 5px;
+      }
+      .controls button {
+        padding: 6px 12px;
+        font-size: 0.8rem;
+      }
+      #spinBtn {
+        padding: 8px 20px;
+      }
+    }
+    
+    /* Very short popout */
+    @media (max-height: 450px) {
+      html, body {
+        overflow: hidden;
+      }
+      body {
+        justify-content: flex-start;
+      }
+      h1 {
+        display: none;
+      }
+      .mode-indicator {
+        margin-bottom: 2px;
+      }
+      .stats {
+        margin-bottom: 3px;
+      }
+      .left-panel {
+        display: none;
+      }
+      .grid {
+        grid-template-columns: repeat(6, 36px);
+        grid-template-rows: repeat(5, 36px);
+      }
+      .cell {
+        width: 36px;
+        height: 36px;
+        font-size: 1rem;
+      }
+      .win-display {
+        font-size: 1rem;
+        min-height: 20px;
+        margin-top: 3px;
+      }
+      .controls {
+        margin-top: 3px;
+      }
+    }
+    
+    /* Narrow portrait / PopoutS */
+    @media (max-width: 400px) {
+      body {
+        padding: 5px;
+        overflow-x: hidden;
+      }
+      h1 {
+        font-size: 1rem;
+        margin-bottom: 3px;
+        letter-spacing: 1px;
+      }
+      .mode-indicator {
+        margin-bottom: 4px;
+        font-size: 0.7rem;
+      }
+      .stats {
+        flex-direction: column;
+        gap: 3px;
+        margin-bottom: 6px;
+        width: 100%;
+        align-items: center;
+      }
+      .stat {
+        padding: 3px 8px;
+        font-size: 0.7rem;
+      }
+      .stat-value {
+        font-size: 0.8rem;
+      }
+      .bet-btn {
+        width: 16px;
+        height: 16px;
+        font-size: 0.75rem;
+      }
+      .left-panel {
+        display: none;
+      }
+      .grid-container {
+        padding: 5px;
+      }
+      .grid {
+        grid-template-columns: repeat(6, 44px);
+        grid-template-rows: repeat(5, 44px);
+        gap: 2px;
+      }
+      .cell {
+        width: 44px;
+        height: 44px;
+        font-size: 1.2rem;
+      }
+      .win-display {
+        font-size: 1rem;
+        margin-top: 6px;
+      }
+      .controls {
+        margin-top: 6px;
+        gap: 4px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .controls button {
+        padding: 6px 10px;
+        font-size: 0.7rem;
+      }
+    }
+    
+    /* Very narrow */
+    @media (max-width: 340px) {
+      h1 {
+        display: none;
+      }
+      .mode-indicator {
+        margin-top: 5px;
+      }
+      .grid {
+        grid-template-columns: repeat(6, 40px);
+        grid-template-rows: repeat(5, 40px);
+      }
+      .cell {
+        width: 40px;
+        height: 40px;
+        font-size: 1.1rem;
+      }
+    }
+    
+    /* Extra narrow */
+    @media (max-width: 300px) {
+      .grid {
+        grid-template-columns: repeat(6, 34px);
+        grid-template-rows: repeat(5, 34px);
+      }
+      .cell {
+        width: 34px;
+        height: 34px;
+        font-size: 0.9rem;
+      }
+      .controls button {
+        padding: 5px 8px;
+        font-size: 0.65rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>⚡LIGHTNING SURGE⚡</h1>
+  
+  <div id="replayBanner" class="replay-banner" style="display: none;">
+    🔄 REPLAY MODE
+    <div class="bet-info" id="replayBetInfo"></div>
+  </div>
+  
+  <div class="mode-indicator" id="modeIndicator">Initializing...</div>
+  
+  <div class="stats">
+    <div class="stat">Balance: <span class="stat-value" id="balance">-</span></div>
+    <div class="stat">Play: <button class="bet-btn" onclick="changeBet(-1)">−</button> <span class="stat-value" id="betDisplay">-</span> <button class="bet-btn" onclick="changeBet(1)">+</button></div>
+  </div>
+  
+  <div class="main-area">
+    <div>
+      <div class="wild-mode-banner" id="wildModeBanner"></div>
+      <div class="grid-container">
+        <div class="grid" id="grid"></div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="win-display" id="winDisplay"></div>
+  <div class="error-display" id="errorDisplay"></div>
+  
+  <div class="controls">
+    <button id="soundBtn" onclick="toggleSound()" title="Toggle Sound">🔇</button>
+    <button id="infoBtn" onclick="toggleInfo()">ℹ️ INFO</button>
+    <button id="spinBtn" onclick="spin()" disabled>⚡ SPIN ⚡</button>
+    <button id="autoBtn" onclick="toggleAuto()">AUTO</button>
+  </div>
+  
+  <!-- Auto Confirm Modal -->
+  <div id="autoConfirmModal" class="modal" style="display: none;">
+    <div class="modal-content" style="max-width: 350px; text-align: center;">
+      <h3 style="color: #ffd700;">Start Auto-Spin?</h3>
+      <p style="margin: 15px 0;">This will automatically spin until you click STOP.</p>
+      <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
+        <button onclick="confirmAuto(true)" style="background: linear-gradient(145deg, #00cc66, #009944);">START</button>
+        <button onclick="confirmAuto(false)" style="background: linear-gradient(145deg, #cc4444, #993333);">CANCEL</button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Info Modal -->
+  <div id="infoModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <span class="modal-close" onclick="toggleInfo()">&times;</span>
+      <h2>⚡LIGHTNING SURGE⚡</h2>
+      
+      <h3>How to Play</h3>
+      <p>Lightning strikes create chains of matching symbols. Longer chains = bigger multipliers! Win = Base Value × Chain Multiplier × Play Amount.</p>
+      
+      <h3>Controls</h3>
+      <ul>
+        <li><strong>SPIN</strong> - Start a spin (or press Spacebar)</li>
+        <li><strong>+/−</strong> - Increase/decrease play amount</li>
+        <li><strong>AUTO</strong> - Start auto-spin (requires confirmation)</li>
+        <li><strong>STOP</strong> - Stop auto-spin</li>
+        <li><strong>🔊/🔇</strong> - Toggle sound on/off</li>
+        <li><strong>INFO</strong> - Open game rules (ESC to close)</li>
+      </ul>
+      
+      <h3>Game Rules</h3>
+      <ul>
+        <li>5×6 grid with 9 symbols + Wild</li>
+        <li>3 lightning strikes per spin hit random cells</li>
+        <li>Chains form from struck cells via 8-way adjacency (including diagonals)</li>
+        <li>Minimum chain length: 3 matching symbols</li>
+        <li>Wilds (⚡) substitute for any symbol in chains</li>
+      </ul>
+      
+      <h3>Wild Mode (Bonus Feature)</h3>
+      <ul>
+        <li><strong>Trigger:</strong> 3 or more Wild symbols (⚡) on the grid</li>
+        <li><strong>Effect:</strong> All wins multiplied by ×5</li>
+        <li>In Wild Mode, chains start from Wild symbols</li>
+        <li>Approximate trigger rate: 1 in 71 spins</li>
+      </ul>
+      
+      <h3>Chain Multipliers</h3>
+      <table class="paytable">
+        <tr><th>Chain Length</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>10+</th></tr>
+        <tr><th>Multiplier</th><td>×3</td><td>×4</td><td>×5</td><td>×6</td><td>×7</td><td>×8</td><td>×9</td><td>×10</td></tr>
+      </table>
+      
+      <h3>Symbol Values (Base Value per 1.00 Play)</h3></h3>
+      <p style="font-size: 0.75rem; color: #aaa;">Final Win = Base Value × Chain Multiplier. In Wild Mode: × additional 5.</p>
+      <table class="paytable">
+        <tr><th>Symbol</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8+</th></tr>
+        <tr><td>⚡ Wild</td><td colspan="6" style="text-align:center;">Substitutes for all symbols</td></tr>
+        <tr><td>🌩️ ThunderGod</td><td>0.15</td><td>0.40</td><td>1.00</td><td>2.00</td><td>6.00</td><td>15.00</td></tr>
+        <tr><td>🦅 StormEagle</td><td>0.12</td><td>0.30</td><td>0.80</td><td>1.50</td><td>4.00</td><td>10.00</td></tr>
+        <tr><td>🐉 CloudSerpent</td><td>0.10</td><td>0.25</td><td>0.60</td><td>1.20</td><td>3.00</td><td>7.50</td></tr>
+        <tr><td>🥁 RainDrum</td><td>0.08</td><td>0.20</td><td>0.50</td><td>1.00</td><td>2.50</td><td>6.00</td></tr>
+        <tr><td>🎭 WindMask</td><td>0.06</td><td>0.15</td><td>0.40</td><td>0.80</td><td>2.00</td><td>5.00</td></tr>
+        <tr><td>🏮 StormLantern</td><td>0.05</td><td>0.12</td><td>0.30</td><td>0.60</td><td>1.50</td><td>4.00</td></tr>
+        <tr><td>🌪️ Tornado</td><td>0.04</td><td>0.10</td><td>0.25</td><td>0.50</td><td>1.20</td><td>3.00</td></tr>
+        <tr><td>🌊 Wave</td><td>0.03</td><td>0.08</td><td>0.20</td><td>0.40</td><td>1.00</td><td>2.50</td></tr>
+        <tr><td>☁️ StormCloud</td><td>0.02</td><td>0.06</td><td>0.15</td><td>0.30</td><td>0.80</td><td>2.00</td></tr>
+      </table>
+      
+      <h3>Game Mode</h3>
+      <table class="paytable">
+        <tr><th>Mode</th><th>Cost</th><th>RTP</th><th>Volatility</th><th>Max Win</th></tr>
+        <tr><td>Base Game</td><td>1× Play</td><td>96.50%</td><td>High (σ=8.44)</td><td>600×</td></tr>
+      </table>
+      
+      <h3 style="margin-top: 20px; font-size: 0.8rem; color: #888;">Disclaimer</h3>
+      <p style="font-size: 0.7rem; color: #666; line-height: 1.4;">
+        Malfunction voids all results. A consistent internet connection is required. 
+        In the event of a disconnection, reload the game to finish any uncompleted rounds. 
+        The expected return (RTP) is calculated over many spins and is not guaranteed for any individual session. 
+        Animations are not representative of any physical device and are for illustrative purposes only. 
+        TM and © 2025 Savage Wind / Stake Engine.
+      </p>
+    </div>
+  </div>
+
+<script>
+// ============================================================
+// Java-compatible Random (LCG) for deterministic results
+// ============================================================
+
+class JavaRandom {
+  constructor(seed) {
+    this.multiplier = 0x5DEECE66Dn;
+    this.addend = 0xBn;
+    this.mask = (1n << 48n) - 1n;
+    this.seed = (BigInt(seed) ^ this.multiplier) & this.mask;
+  }
+  
+  next(bits) {
+    this.seed = (this.seed * this.multiplier + this.addend) & this.mask;
+    return Number(this.seed >> (48n - BigInt(bits)));
+  }
+  
+  nextInt(bound) {
+    if (bound <= 0) throw new Error("bound must be positive");
+    if ((bound & (bound - 1)) === 0) {
+      return (bound * this.next(31)) >> 31;
+    }
+    let bits, val;
+    do {
+      bits = this.next(31);
+      val = bits % bound;
+    } while (bits - val + (bound - 1) < 0);
+    return val;
+  }
+  
+  nextDouble() {
+    return (this.next(26) * 134217728 + this.next(27)) / 9007199254740992;
+  }
+  
+  nextLong() {
+    return BigInt(this.next(32)) << 32n | BigInt(this.next(32) >>> 0);
+  }
+}
+
+// ============================================================
+// Stake Engine RGS Integration
+// Amount multiplier: 1,000,000 = $1.00
+// ============================================================
+
+const AMOUNT_MULTIPLIER = 1000000;
+
+// Parse URL parameters
+const urlParams = new URLSearchParams(window.location.search);
+const sessionID = urlParams.get('sessionID');
+const rgsUrlParam = urlParams.get('rgs_url');
+const currency = urlParams.get('currency') || 'USD';
+const lang = urlParams.get('lang') || 'en';
+const isDemo = urlParams.get('demo') === 'true';
+
+// Replay mode parameters
+const isReplayMode = urlParams.has('replay') || urlParams.has('replay_seed') || urlParams.has('seed');
+const replaySeed = urlParams.get('replay_seed') || urlParams.get('seed');
+const replayBet = parseFloat(urlParams.get('bet') || urlParams.get('amount') || '1.00');
+const replayCurrency = urlParams.get('currency') || 'USD';
+
+console.log('[Init] isReplayMode:', isReplayMode);
+if (isReplayMode) {
+  console.log('[Replay] seed:', replaySeed, 'bet:', replayBet, 'currency:', replayCurrency);
+}
+
+// Build proper RGS base URL
+let rgsBaseUrl = null;
+if (rgsUrlParam) {
+  if (rgsUrlParam.startsWith('http://') || rgsUrlParam.startsWith('https://')) {
+    rgsBaseUrl = rgsUrlParam;
+  } else {
+    rgsBaseUrl = 'https://' + rgsUrlParam;
+  }
+  rgsBaseUrl = rgsBaseUrl.replace(/\/$/, '');
+}
+
+const isRgsMode = !!(sessionID && rgsBaseUrl);
+
+// Game state
+let balance = 0;
+let grid = [];
+let isSpinning = false;
+let isAutoMode = false;
+let spinNumber = 0;
+let wildModeCount = 0;
+let gameRng = null;  // Current round RNG (seeded)
+
+// RGS Config (loaded from authenticate)
+let rgsConfig = {
+  minBet: 100000,
+  maxBet: 1000000000,
+  stepBet: 100000,
+  betLevels: [100000, 200000, 500000, 1000000]
+};
+let currentBetAmount = 100000;
+
+// Game Config
+const CONFIG = {
+  grid: { rows: 5, cols: 6 },
+  symbols: {
+    weights: [0, 7.0, 9.0, 11.0, 15.0, 17.0, 19.0, 22.0, 24.0, 26.0],
+    emojis: ['⚡', '🌩️', '🦅', '🐉', '🥁', '🎭', '🏮', '🌪️', '🌊', '☁️'],
+    names: ['Wild', 'ThunderGod', 'StormEagle', 'CloudSerpent', 'RainDrum', 'WindMask', 'StormLantern', 'Tornado', 'Wave', 'StormCloud']
+  },
+  lightning: {
+    strikesPerSpin: 3,
+    wildProb: 0.03,
+    multipliers: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+  },
+  wildMode: {
+    minWilds: 3,
+    multiplier: 5
+  },
+  paytable: {
+    1: [15, 40, 100, 200, 600, 1500],
+    2: [12, 30, 80, 150, 400, 1000],
+    3: [10, 25, 60, 120, 300, 750],
+    4: [8, 20, 50, 100, 250, 600],
+    5: [6, 15, 40, 80, 200, 500],
+    6: [5, 12, 30, 60, 150, 400],
+    7: [4, 10, 25, 50, 120, 300],
+    8: [3, 8, 20, 40, 100, 250],
+    9: [2, 6, 15, 30, 80, 200]
+  }
+};
+
+// ============================================================
+// RGS API Functions
+// ============================================================
+
+async function rgsAuthenticate() {
+  if (!isRgsMode) return false;
+  
+  const url = `${rgsBaseUrl}/wallet/authenticate`;
+  console.log('[RGS] Authenticate URL:', url);
+  
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionID: sessionID })
+    });
+    
+    console.log('[RGS] Auth response status:', response.status);
+    
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`HTTP ${response.status}: ${text}`);
+    }
+    
+    const data = await response.json();
+    console.log('[RGS] Auth response data:', data);
+    
+    if (data.balance) {
+      balance = data.balance.amount;
+      currency = data.balance.currency || currency;
+      updateBalanceDisplay();
+    }
+    
+    if (data.config) {
+      rgsConfig.minBet = data.config.minBet || rgsConfig.minBet;
+      rgsConfig.maxBet = data.config.maxBet || rgsConfig.maxBet;
+      rgsConfig.stepBet = data.config.stepBet || rgsConfig.stepBet;
+      if (data.config.betLevels && data.config.betLevels.length > 0) {
+        rgsConfig.betLevels = data.config.betLevels;
+      }
+      
+      // Storage key unique per currency
+      const storageKey = `lightning_surge_bet_${currency}`;
+      
+      // Priority for bet restoration:
+      // 1. Active round bet (mid-spin refresh)
+      // 2. localStorage saved bet
+      // 3. RGS default bet level
+      // 4. First bet level
+      
+      if (data.round && data.round.active && data.round.bet) {
+        // Mid-spin refresh: use the bet from active round
+        currentBetAmount = data.round.bet;
+        console.log('[RGS] Restored bet from active round:', currentBetAmount);
+      } else {
+        // Check localStorage for saved bet (preserve on refresh)
+        const savedBet = localStorage.getItem(storageKey);
+        if (savedBet && rgsConfig.betLevels.includes(Number(savedBet))) {
+          currentBetAmount = Number(savedBet);
+          console.log('[RGS] Restored bet from localStorage:', currentBetAmount);
+        } else if (data.config.defaultBetLevel && rgsConfig.betLevels.includes(data.config.defaultBetLevel)) {
+          currentBetAmount = data.config.defaultBetLevel;
+          console.log('[RGS] Using RGS default bet:', currentBetAmount);
+        } else {
+          currentBetAmount = rgsConfig.betLevels[0];
+          console.log('[RGS] Using first bet level:', currentBetAmount);
+        }
+      }
+      updateBetDisplay();
+    }
+    
+    // Check for active round and finish it
+    if (data.round && data.round.active) {
+      console.log('[RGS] Found active round, finishing it...');
+      await rgsEndRound();
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('[RGS] Auth error:', error);
+    showError(`Authentication failed: ${error.message}`);
+    return false;
+  }
+}
+
+async function rgsPlay(amount, mode = 'BASE') {
+  if (!isRgsMode) return null;
+  
+  const url = `${rgsBaseUrl}/wallet/play`;
+  const payload = { sessionID, amount, mode };
+  
+  console.log('[RGS] Play URL:', url);
+  console.log('[RGS] Play payload:', payload);
+  
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    
+    console.log('[RGS] Play response status:', response.status);
+    
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`HTTP ${response.status}: ${text}`);
+    }
+    
+    const data = await response.json();
+    console.log('[RGS] Play response data:', data);
+    
+    if (data.balance) {
+      balance = data.balance.amount;
+      updateBalanceDisplay();
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('[RGS] Play error:', error);
+    showError(`Play failed: ${error.message}`);
+    return null;
+  }
+}
+
+async function rgsEndRound() {
+  if (!isRgsMode) return null;
+  
+  const url = `${rgsBaseUrl}/wallet/end-round`;
+  console.log('[RGS] EndRound URL:', url);
+  
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sessionID })
+    });
+    
+    console.log('[RGS] EndRound response status:', response.status);
+    
+    if (!response.ok) {
+      const text = await response.text();
+      // Ignore "no active bet" error - round already closed
+      if (text.includes('does not have active bet')) {
+        console.log('[RGS] Round already closed, ignoring');
+        return null;
+      }
+      throw new Error(`HTTP ${response.status}: ${text}`);
+    }
+    
+    const data = await response.json();
+    console.log('[RGS] EndRound response data:', data);
+    
+    if (data.balance) {
+      balance = data.balance.amount;
+      updateBalanceDisplay();
+    }
+    
+    return data;
+  } catch (error) {
+    console.error('[RGS] EndRound error:', error);
+    // Don't show error for "no active bet"
+    if (!error.message.includes('does not have active bet')) {
+      showError(`EndRound failed: ${error.message}`);
+    }
+    return null;
+  }
+}
+
+// ============================================================
+// Display Helpers
+// ============================================================
+
+// Currency symbols map
+const currencySymbols = {
+  USD: '$', EUR: '€', GBP: '£', JPY: '¥', CNY: '¥',
+  KRW: '₩', INR: '₹', RUB: '₽', BRL: 'R$', TRY: '₺',
+  THB: '฿', VND: '₫', PHP: '₱', IDR: 'Rp', MYR: 'RM',
+  SGD: 'S$', HKD: 'HK$', TWD: 'NT$', AUD: 'A$', NZD: 'NZ$',
+  CAD: 'C$', CHF: 'CHF', SEK: 'kr', NOK: 'kr', DKK: 'kr',
+  PLN: 'zł', CZK: 'Kč', HUF: 'Ft', RON: 'lei', BGN: 'лв',
+  MXN: 'MX$', ARS: 'ARS', CLP: 'CLP', COP: 'COP', PEN: 'PEN',
+  ZAR: 'R', NGN: '₦', KES: 'KSh', EGP: 'E£', AED: 'د.إ',
+  SAR: '﷼', ILS: '₪', PKR: '₨', BDT: '৳', LKR: 'Rs'
+};
+
+function getCurrencySymbol(curr) {
+  // Social mode currencies start with 'X' - remove prefix per Stake Engine guidelines
+  if (curr && curr.startsWith('X') && curr.length > 1 && !currencySymbols[curr]) {
+    return curr.substring(1);
+  }
+  return currencySymbols[curr] || curr;
+}
+
+function formatAmount(apiAmount) {
+  const value = (apiAmount / AMOUNT_MULTIPLIER).toFixed(2);
+  const symbol = getCurrencySymbol(currency);
+  return symbol + value;
+}
+
+function updateBalanceDisplay() {
+  document.getElementById('balance').textContent = formatAmount(balance);
+}
+
+function updateBetDisplay() {
+  document.getElementById('betDisplay').textContent = formatAmount(currentBetAmount);
+}
+
+let currentBetIndex = 0;
+
+function changeBet(direction) {
+  if (isSpinning) return;
+  
+  const levels = rgsConfig.betLevels;
+  currentBetIndex = levels.indexOf(currentBetAmount);
+  if (currentBetIndex === -1) currentBetIndex = 0;
+  
+  currentBetIndex += direction;
+  if (currentBetIndex < 0) currentBetIndex = 0;
+  if (currentBetIndex >= levels.length) currentBetIndex = levels.length - 1;
+  
+  currentBetAmount = levels[currentBetIndex];
+  
+  // Save to localStorage for refresh preservation (key per currency)
+  const storageKey = `lightning_surge_bet_${currency}`;
+  localStorage.setItem(storageKey, currentBetAmount);
+  
+  updateBetDisplay();
+}
+
+function toggleInfo() {
+  const modal = document.getElementById('infoModal');
+  modal.style.display = modal.style.display === 'none' ? 'flex' : 'none';
+}
+
+// Close INFO modal on ESC key, Spacebar for SPIN
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    const modal = document.getElementById('infoModal');
+    if (modal.style.display === 'flex') {
+      modal.style.display = 'none';
+    }
+    const autoModal = document.getElementById('autoConfirmModal');
+    if (autoModal.style.display === 'flex') {
+      autoModal.style.display = 'none';
+    }
+  }
+  
+  // Spacebar to spin
+  if (e.code === 'Space' || e.key === ' ') {
+    e.preventDefault(); // Prevent page scroll
+    const spinBtn = document.getElementById('spinBtn');
+    if (!spinBtn.disabled && !isSpinning) {
+      spin();
+    }
+  }
+});
+
+function showError(msg) {
+  document.getElementById('errorDisplay').textContent = msg;
+}
+
+function clearError() {
+  document.getElementById('errorDisplay').textContent = '';
+}
+
+// ============================================================
+// Local Game Logic
+// ============================================================
+
+let weightedPool = [];
+
+function initWeights() {
+  weightedPool = [];
+  for (let sym = 1; sym < CONFIG.symbols.weights.length; sym++) {
+    const weight = CONFIG.symbols.weights[sym];
+    for (let i = 0; i < Math.round(weight * 10); i++) {
+      weightedPool.push(sym);
+    }
+  }
+}
+
+function randomSymbol() {
+  if (gameRng.nextDouble() < CONFIG.lightning.wildProb) return 0;
+  return weightedPool[gameRng.nextInt(weightedPool.length)];
+}
+
+function generateGrid(seed) {
+  if (seed !== undefined) {
+    gameRng = new JavaRandom(seed);
+  }
+  grid = [];
+  for (let r = 0; r < CONFIG.grid.rows; r++) {
+    const row = [];
+    for (let c = 0; c < CONFIG.grid.cols; c++) {
+      row.push(randomSymbol());
+    }
+    grid.push(row);
+  }
+}
+
+function renderGrid() {
+  const gridEl = document.getElementById('grid');
+  gridEl.innerHTML = '';
+  
+  for (let r = 0; r < CONFIG.grid.rows; r++) {
+    for (let c = 0; c < CONFIG.grid.cols; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell' + (grid[r][c] === 0 ? ' wild' : '');
+      cell.id = `cell-${r}-${c}`;
+      cell.textContent = CONFIG.symbols.emojis[grid[r][c]];
+      gridEl.appendChild(cell);
+    }
+  }
+}
+
+function getNeighbors(r, c) {
+  const dirs = [[-1,-1], [-1,0], [-1,1], [0,-1], [0,1], [1,-1], [1,0], [1,1]];
+  const neighbors = [];
+  for (const [dr, dc] of dirs) {
+    const nr = r + dr, nc = c + dc;
+    if (nr >= 0 && nr < CONFIG.grid.rows && nc >= 0 && nc < CONFIG.grid.cols) {
+      neighbors.push([nr, nc]);
+    }
+  }
+  return neighbors;
+}
+
+function traceChain(startR, startC, usedCells) {
+  const startSymbol = grid[startR][startC];
+  const targetSymbol = startSymbol === 0 ? -1 : startSymbol;
+  
+  let chainSymbol = targetSymbol;
+  let stepNum = 0;
+  
+  function dfs(r, c, visited, currentSymbol) {
+    stepNum++;
+    const path = [[r, c, stepNum]];
+    const neighbors = getNeighbors(r, c);
+    
+    let longestExtension = [];
+    for (const [nr, nc] of neighbors) {
+      const key = `${nr},${nc}`;
+      if (visited.has(key) || usedCells.has(key)) continue;
+      
+      const neighborSym = grid[nr][nc];
+      let newSymbol = currentSymbol;
+      
+      if (neighborSym === 0) {
+        // Wild
+      } else if (currentSymbol === -1) {
+        newSymbol = neighborSym;
+      } else if (neighborSym !== currentSymbol) {
+        continue;
+      }
+      
+      visited.add(key);
+      const savedStep = stepNum;
+      const extension = dfs(nr, nc, visited, newSymbol);
+      visited.delete(key);
+      stepNum = savedStep;
+      
+      if (extension.path.length > longestExtension.length) {
+        longestExtension = extension.path;
+        if (currentSymbol === -1 && extension.symbol !== -1) {
+          newSymbol = extension.symbol;
+        }
+        chainSymbol = newSymbol;
+      }
+    }
+    
+    return { path: path.concat(longestExtension), symbol: chainSymbol };
+  }
+  
+  const visited = new Set([`${startR},${startC}`]);
+  const result = dfs(startR, startC, visited, targetSymbol);
+  
+  // Перенумеруем путь последовательно
+  const finalPath = result.path.map((item, idx) => [item[0], item[1], idx + 1]);
+  
+  return { length: finalPath.length, symbol: result.symbol === -1 ? 0 : result.symbol, path: finalPath };
+}
+
+function findWilds() {
+  const wilds = [];
+  for (let r = 0; r < CONFIG.grid.rows; r++) {
+    for (let c = 0; c < CONFIG.grid.cols; c++) {
+      if (grid[r][c] === 0) wilds.push([r, c]);
+    }
+  }
+  return wilds;
+}
+
+function traceChainFromWild(startR, startC, usedCells) {
+  const neighbors = getNeighbors(startR, startC);
+  let bestChain = { length: 0, symbol: 0, path: [] };
+  
+  for (const [nr, nc] of neighbors) {
+    if (usedCells.has(`${nr},${nc}`)) continue;
+    const symbol = grid[nr][nc];
+    if (symbol === 0) continue;
+    
+    const chain = traceChain(nr, nc, usedCells);
+    if (chain.length > bestChain.length) {
+      bestChain = chain;
+    }
+  }
+  
+  return { ...bestChain, wildStart: [startR, startC] };
+}
+
+function getPayout(symbol, chainLength, betAmount) {
+  if (chainLength < 3) return 0;
+  const idx = Math.min(chainLength - 3, 5);
+  const multiplier = CONFIG.paytable[symbol][idx];
+  return Math.floor(betAmount * multiplier / 100);
+}
+
+function getMultiplier(chainLength) {
+  const idx = Math.min(chainLength - 1, CONFIG.lightning.multipliers.length - 1);
+  return CONFIG.lightning.multipliers[idx];
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function calculateRound(betAmount, seed) {
+  generateGrid(seed);
+  
+  let totalWin = 0;
+  const usedCells = new Set();
+  const chains = [];
+  const misses = [];  // Failed strikes (chain < 3)
+  
+  const wilds = findWilds();
+  const isWildMode = wilds.length >= CONFIG.wildMode.minWilds;
+  const wildMultiplier = isWildMode ? CONFIG.wildMode.multiplier : 1;
+  
+  if (isWildMode) {
+    for (const [wr, wc] of wilds) {
+      if (usedCells.has(`${wr},${wc}`)) continue;
+      const chain = traceChainFromWild(wr, wc, usedCells);
+      if (chain.length >= 3 && chain.symbol > 0) {
+        const basePay = getPayout(chain.symbol, chain.length, betAmount);
+        const mult = getMultiplier(chain.length);
+        const win = basePay * mult * wildMultiplier;
+        totalWin += win;
+        chains.push({ ...chain, win, mult, basePay, wildMultiplier });
+        usedCells.add(`${wr},${wc}`);
+        chain.path.forEach(([r, c]) => usedCells.add(`${r},${c}`));
+      }
+    }
+  } else {
+    for (let strike = 0; strike < CONFIG.lightning.strikesPerSpin; strike++) {
+      let attempts = 0;
+      let startR, startC;
+      do {
+        startR = gameRng.nextInt(CONFIG.grid.rows);
+        startC = gameRng.nextInt(CONFIG.grid.cols);
+        attempts++;
+      } while (usedCells.has(`${startR},${startC}`) && attempts < 30);
+      if (attempts >= 30) continue;
+      
+      const chain = traceChain(startR, startC, usedCells);
+      if (chain.length >= 3 && chain.symbol > 0) {
+        const basePay = getPayout(chain.symbol, chain.length, betAmount);
+        const mult = getMultiplier(chain.length);
+        const win = basePay * mult;
+        totalWin += win;
+        chains.push({ ...chain, win, mult, basePay, wildMultiplier: 1 });
+        chain.path.forEach(([r, c]) => usedCells.add(`${r},${c}`));
+      } else {
+        // Failed strike - chain too short
+        misses.push([startR, startC]);
+      }
+    }
+  }
+  
+  return { totalWin, chains, misses, wilds, isWildMode, wildMultiplier };
+}
+
+async function animateRound(result) {
+  renderGrid();
+  await sleep(200);
+  
+  const { chains, misses, wilds, isWildMode, wildMultiplier } = result;
+  
+  // Show misses first (failed strikes)
+  if (misses && misses.length > 0) {
+    for (const [r, c] of misses) {
+      const cell = document.getElementById(`cell-${r}-${c}`);
+      cell.classList.add('struck');
+      await sleep(100);
+    }
+    await sleep(200);
+  }
+  
+  if (isWildMode) {
+    wildModeCount++;
+    //document.getElementById('wildModeCount').textContent = wildModeCount;
+    //document.getElementById('currentMult').textContent = `×${wildMultiplier}`;
+    //document.getElementById('currentMult').style.color = '#ffd700';
+    document.getElementById('wildModeBanner').textContent = `⚡ ${wilds.length} WILDS — ×${wildMultiplier} MODE! ⚡`;
+    playSound('wildMode');
+    await sleep(400);
+  } else if (chains.length > 0) {
+    const lastMult = chains[chains.length - 1].mult;
+    //document.getElementById('currentMult').textContent = `×${lastMult}`;
+    //document.getElementById('currentMult').style.color = '#00d4ff';
+  }
+  
+  //const chainListEl = //document.getElementById('chainList');
+  const chainColors = ['#ffd700', '#ff6b6b', '#4ecdc4', '#a55eea', '#26de81', '#fd9644', '#45aaf2', '#778ca3'];
+  let chainIndex = 0;
+  
+  for (const ch of chains) {
+    const color = chainColors[chainIndex % chainColors.length];
+    chainIndex++;
+    for (const item of ch.path) {
+      const [r, c, dist] = item;
+      const cell = document.getElementById(`cell-${r}-${c}`);
+      cell.classList.add('struck', 'chain');
+      // Add distance number with chain-specific color
+      const numEl = document.createElement('div');
+      numEl.className = 'chain-number';
+      numEl.style.background = color;
+      numEl.textContent = dist;
+      cell.appendChild(numEl);
+      await sleep(50);
+    }
+    
+    const basePayDisplay = formatAmount(ch.basePay);
+    const winDisplay = formatAmount(ch.win);
+    let chainText = `${CONFIG.symbols.names[ch.symbol]} x${ch.length}: ${basePayDisplay}×${ch.mult}`;
+    if (ch.wildMultiplier > 1) chainText += `×${ch.wildMultiplier}`;
+    chainText += ` = ${winDisplay}`;
+    
+    const div = document.createElement('div');
+    div.textContent = chainText;
+    //chainListEl.appendChild(div);
+    await sleep(200);
+  }
+}
+
+// ============================================================
+// Main Spin
+// ============================================================
+
+async function spin() {
+  if (isSpinning) return;
+  if (balance < currentBetAmount && isRgsMode) {
+    showError('Not enough to spin');
+    return;
+  }
+  
+  isSpinning = true;
+  document.getElementById('spinBtn').disabled = true;
+  clearError();
+  playSound('spin');
+  
+  spinNumber++;
+  //document.getElementById('spinCount').textContent = spinNumber;
+  document.getElementById('winDisplay').textContent = '';
+  //document.getElementById('chainList').innerHTML = '';
+  document.getElementById('wildModeBanner').textContent = '';
+  
+  if (isRgsMode) {
+    // Save current bet to localStorage before play (for mid-spin refresh recovery)
+    const storageKey = `lightning_surge_bet_${currency}`;
+    localStorage.setItem(storageKey, currentBetAmount);
+    
+    const playResponse = await rgsPlay(currentBetAmount, 'lightningsurge');
+    if (!playResponse) {
+      isSpinning = false;
+      document.getElementById('spinBtn').disabled = false;
+      spinNumber--;
+      //document.getElementById('spinCount').textContent = spinNumber;
+      return;
+    }
+    
+    // Extract seed from server response
+    const round = playResponse.round;
+    // Seed может быть в round.seed или в round.state[0].seed
+    const seed = round.seed !== undefined ? round.seed : 
+                 (round.state && round.state[0] && round.state[0].seed);
+    
+    console.log('[RGS] Round:', round);
+    
+    if (seed === undefined || seed === null) {
+      console.error('[RGS] No seed in response!');
+      showError('Server did not return seed');
+      isSpinning = false;
+      document.getElementById('spinBtn').disabled = false;
+      return;
+    }
+    
+    console.log('[RGS] Seed:', seed);
+    
+    // Calculate entire round on FE using seed
+    const result = calculateRound(currentBetAmount, seed);
+    
+    console.log('[RGS] FE calculated payout:', result.totalWin);
+    console.log('[RGS] FE grid:', grid);
+    console.log('[RGS] FE chains:', result.chains);
+    
+    // Optional: verify against server payout
+    const serverPayout = round.payout;
+    if (serverPayout !== undefined && serverPayout !== result.totalWin) {
+      console.warn('[RGS] Payout mismatch! Server:', serverPayout, 'FE:', result.totalWin);
+    }
+    
+    // Animate the round
+    await animateRound(result);
+    
+    // End round on server (only if there's a win - no win rounds auto-close)
+    if (result.totalWin > 0) {
+      await rgsEndRound();
+    }
+    
+    // Display win
+    if (result.totalWin > 0) {
+      document.getElementById('winDisplay').textContent = `WIN: ${formatAmount(result.totalWin)}`;
+      document.getElementById('winDisplay').style.color = '#00ff88';
+      // Play win sound (big win if > 50x bet)
+      if (result.totalWin >= currentBetAmount * 50) {
+        playSound('bigWin');
+      } else {
+        playSound('win');
+      }
+    } else {
+      document.getElementById('winDisplay').textContent = 'NO WIN';
+      document.getElementById('winDisplay').style.color = '#ff6666';
+    }
+  } else {
+    // Demo mode: generate seed from timestamp
+    const seed = Math.floor(Date.now() / 1000);
+    balance -= currentBetAmount;
+    const result = calculateRound(currentBetAmount, seed);
+    await animateRound(result);
+    balance += result.totalWin;
+    updateBalanceDisplay();
+    
+    if (result.totalWin > 0) {
+      document.getElementById('winDisplay').textContent = `WIN: ${formatAmount(result.totalWin)}`;
+      document.getElementById('winDisplay').style.color = '#00ff88';
+      // Play win sound (big win if > 50x bet)
+      if (result.totalWin >= currentBetAmount * 50) {
+        playSound('bigWin');
+      } else {
+        playSound('win');
+      }
+    } else {
+      document.getElementById('winDisplay').textContent = 'NO WIN';
+      document.getElementById('winDisplay').style.color = '#ff6666';
+    }
+  }
+  
+  isSpinning = false;
+  
+  if (isAutoMode && balance >= currentBetAmount) {
+    // Keep spin button disabled during auto
+    await sleep(300);
+    spin();
+  } else if (isAutoMode) {
+    stopAuto();
+    document.getElementById('spinBtn').disabled = false;
+  } else {
+    document.getElementById('spinBtn').disabled = false;
+  }
+}
+
+function stopAuto() {
+  isAutoMode = false;
+  const btn = document.getElementById('autoBtn');
+  btn.textContent = 'AUTO';
+  btn.classList.remove('stop');
+}
+
+// Sound modes: 0=mute, 1=sfx only, 2=music only, 3=sfx+music
+let soundMode = 0;
+const soundIcons = ['🔇', '🔊', '🎵', '🎶'];
+const soundLabels = ['MUTE', 'SFX', 'MUSIC', 'ALL'];
+
+// Web Audio API context
+let audioCtx = null;
+
+function initAudio() {
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  } catch (e) {
+    console.log('Web Audio API not supported');
+  }
+}
+
+// Background music - light foxtrot style
+let bgMusicInterval = null;
+
+function startBgMusic() {
+  if (!audioCtx || bgMusicInterval) return;
+  
+  const chords = [
+    [261.63, 329.63, 392.00],
+    [220.00, 261.63, 329.63],
+    [293.66, 349.23, 440.00],
+    [196.00, 246.94, 293.66, 349.23],
+  ];
+  
+  const bassNotes = [130.81, 110.00, 146.83, 98.00];
+  
+  let chordIndex = 0;
+  let beat = 0;
+  
+  const playBeat = () => {
+    if (soundMode < 2 || !audioCtx) return;
+    if (audioCtx.state === 'suspended') return;
+    
+    const now = audioCtx.currentTime;
+    
+    if (beat % 2 === 0) {
+      const bassOsc = audioCtx.createOscillator();
+      const bassGain = audioCtx.createGain();
+      bassOsc.type = 'triangle';
+      bassOsc.frequency.value = bassNotes[chordIndex];
+      bassOsc.connect(bassGain);
+      bassGain.connect(audioCtx.destination);
+      bassGain.gain.setValueAtTime(0.1, now);
+      bassGain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+      bassOsc.start(now);
+      bassOsc.stop(now + 0.25);
+    }
+    
+    if (beat % 2 === 1) {
+      chords[chordIndex].forEach(freq => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        gain.gain.setValueAtTime(0.05, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+        osc.start(now);
+        osc.stop(now + 0.15);
+      });
+    }
+    
+    beat++;
+    if (beat >= 8) {
+      beat = 0;
+      chordIndex = (chordIndex + 1) % chords.length;
+    }
+  };
+  
+  bgMusicInterval = setInterval(playBeat, 250);
+  playBeat();
+}
+
+function stopBgMusic() {
+  if (bgMusicInterval) {
+    clearInterval(bgMusicInterval);
+    bgMusicInterval = null;
+  }
+}
+
+function updateSoundMode() {
+  const btn = document.getElementById('soundBtn');
+  btn.textContent = soundIcons[soundMode];
+  btn.title = soundLabels[soundMode];
+  localStorage.setItem('lightning_surge_sound_mode', soundMode);
+  
+  // Handle music
+  if (soundMode >= 2) {
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+    startBgMusic();
+  } else {
+    stopBgMusic();
+  }
+}
+
+function toggleSound() {
+  soundMode = (soundMode + 1) % 4;
+  
+  if (audioCtx && audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+  
+  updateSoundMode();
+}
+
+function playTone(freq, duration, type = 'sine', volume = 0.3) {
+  if ((soundMode !== 1 && soundMode !== 3) || !audioCtx) return;
+  
+  const oscillator = audioCtx.createOscillator();
+  const gainNode = audioCtx.createGain();
+  
+  oscillator.connect(gainNode);
+  gainNode.connect(audioCtx.destination);
+  
+  oscillator.frequency.value = freq;
+  oscillator.type = type;
+  
+  gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+  
+  oscillator.start(audioCtx.currentTime);
+  oscillator.stop(audioCtx.currentTime + duration);
+}
+
+function playNoise(duration, volume = 0.2) {
+  if ((soundMode !== 1 && soundMode !== 3) || !audioCtx) return;
+  
+  const bufferSize = audioCtx.sampleRate * duration;
+  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+  const data = buffer.getChannelData(0);
+  
+  for (let i = 0; i < bufferSize; i++) {
+    data[i] = Math.random() * 2 - 1;
+  }
+  
+  const noise = audioCtx.createBufferSource();
+  const gainNode = audioCtx.createGain();
+  const filter = audioCtx.createBiquadFilter();
+  
+  noise.buffer = buffer;
+  filter.type = 'lowpass';
+  filter.frequency.value = 1000;
+  
+  noise.connect(filter);
+  filter.connect(gainNode);
+  gainNode.connect(audioCtx.destination);
+  
+  gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+  
+  noise.start();
+}
+
+function playSound(name) {
+  if ((soundMode !== 1 && soundMode !== 3) || !audioCtx) return;
+  
+  // Resume audio context if suspended (browser autoplay policy)
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+  
+  switch(name) {
+    case 'spin':
+      // Quick electronic zap
+      playTone(800, 0.1, 'sawtooth', 0.2);
+      setTimeout(() => playTone(600, 0.1, 'sawtooth', 0.15), 50);
+      setTimeout(() => playTone(400, 0.15, 'sawtooth', 0.1), 100);
+      break;
+      
+    case 'lightning':
+      // Thunder crack
+      playNoise(0.3, 0.4);
+      playTone(100, 0.4, 'sawtooth', 0.3);
+      setTimeout(() => playNoise(0.2, 0.2), 200);
+      break;
+      
+    case 'win':
+      // Ascending victory tones
+      playTone(523, 0.15, 'sine', 0.3); // C5
+      setTimeout(() => playTone(659, 0.15, 'sine', 0.3), 100); // E5
+      setTimeout(() => playTone(784, 0.2, 'sine', 0.3), 200); // G5
+      break;
+      
+    case 'bigWin':
+      // Epic fanfare
+      playTone(523, 0.2, 'sine', 0.4);
+      setTimeout(() => playTone(659, 0.2, 'sine', 0.4), 150);
+      setTimeout(() => playTone(784, 0.2, 'sine', 0.4), 300);
+      setTimeout(() => playTone(1047, 0.4, 'sine', 0.5), 450);
+      setTimeout(() => playNoise(0.3, 0.2), 500);
+      break;
+      
+    case 'wildMode':
+      // Dramatic thunder + power up
+      playNoise(0.5, 0.5);
+      playTone(80, 0.6, 'sawtooth', 0.4);
+      setTimeout(() => playTone(120, 0.3, 'sawtooth', 0.3), 200);
+      setTimeout(() => playTone(200, 0.2, 'sine', 0.3), 400);
+      setTimeout(() => playTone(400, 0.3, 'sine', 0.4), 500);
+      break;
+  }
+}
+
+function stopSound(name) {
+  // Web Audio API sounds auto-stop, no action needed
+}
+
+// Restore sound setting
+function initSound() {
+  initAudio();
+  const saved = localStorage.getItem('lightning_surge_sound_mode');
+  if (saved !== null) {
+    soundMode = parseInt(saved) || 0;
+  }
+  updateSoundMode();
+}
+
+function toggleAuto() {
+  if (!isAutoMode) {
+    // Show confirmation modal
+    document.getElementById('autoConfirmModal').style.display = 'flex';
+  } else {
+    // Stop without confirmation
+    stopAuto();
+  }
+}
+
+function confirmAuto(confirmed) {
+  document.getElementById('autoConfirmModal').style.display = 'none';
+  if (confirmed) {
+    isAutoMode = true;
+    const btn = document.getElementById('autoBtn');
+    btn.textContent = 'STOP';
+    btn.classList.add('stop');
+    if (!isSpinning) spin();
+  }
+}
+
+// ============================================================
+// Init
+// ============================================================
+
+async function init() {
+  const modeEl = document.getElementById('modeIndicator');
+  
+  initWeights();
+  initSound();
+  
+  // Initial grid display with random seed
+  const initSeed = Math.floor(Date.now() / 1000);
+  generateGrid(initSeed);
+  renderGrid();
+  
+  console.log('[Init] URL params:', Object.fromEntries(urlParams));
+  console.log('[Init] sessionID:', sessionID);
+  console.log('[Init] rgs_url:', rgsUrlParam);
+  console.log('[Init] rgsBaseUrl:', rgsBaseUrl);
+  console.log('[Init] isRgsMode:', isRgsMode);
+  
+  if (isRgsMode) {
+    modeEl.textContent = 'Connecting to RGS...';
+    const authSuccess = await rgsAuthenticate();
+    if (authSuccess) {
+      modeEl.textContent = '';
+      modeEl.className = 'mode-indicator rgs';
+      document.getElementById('spinBtn').disabled = false;
+    } else {
+      modeEl.textContent = '🔴 RGS Connection Failed';
+      modeEl.className = 'mode-indicator error';
+    }
+  } else {
+    modeEl.textContent = '🟡 Demo Mode';
+    modeEl.className = 'mode-indicator demo';
+    balance = 1000 * AMOUNT_MULTIPLIER;
+    currentBetAmount = 1 * AMOUNT_MULTIPLIER;
+    updateBalanceDisplay();
+    updateBetDisplay();
+    document.getElementById('spinBtn').disabled = false;
+  }
+  
+  // Handle Replay Mode
+  if (isReplayMode && replaySeed) {
+    console.log('[Replay] Initializing replay mode...');
+    
+    // Show replay banner
+    const replayBanner = document.getElementById('replayBanner');
+    const replayBetInfo = document.getElementById('replayBetInfo');
+    replayBanner.style.display = 'block';
+    
+    // Display play amount clearly (using compliant terminology)
+    const currSymbol = getCurrencySymbol(replayCurrency);
+    replayBetInfo.innerHTML = 'Play: ' + currSymbol + replayBet.toFixed(2);
+    
+    // Set bet
+    currentBetAmount = replayBet * AMOUNT_MULTIPLIER;
+    updateBetDisplay();
+    
+    // Update mode indicator
+    modeEl.textContent = '🔄 REPLAY MODE';
+    modeEl.className = 'mode-indicator';
+    modeEl.style.color = '#ff6b00';
+    
+    // Hide balance in replay mode
+    document.getElementById('balance').textContent = '---';
+    
+    // Disable bet controls in replay mode
+    document.querySelectorAll('.bet-btn').forEach(btn => btn.disabled = true);
+    document.getElementById('autoBtn').disabled = true;
+    
+    // Auto-start replay after short delay
+    setTimeout(function() {
+      console.log('[Replay] Starting replay with seed:', replaySeed);
+      spinWithSeed(parseInt(replaySeed));
+    }, 1000);
+  }
+}
+
+// Replay-specific spin function
+async function spinWithSeed(seed) {
+  if (isSpinning) return;
+  isSpinning = true;
+  
+  document.getElementById('spinBtn').disabled = true;
+  document.getElementById('winDisplay').textContent = '';
+  document.getElementById('wildModeBanner').textContent = '';
+  
+  const result = calculateRound(currentBetAmount, seed);
+  await animateRound(result);
+  
+  if (result.totalWin > 0) {
+    document.getElementById('winDisplay').textContent = `WIN: ${formatAmount(result.totalWin)}`;
+    document.getElementById('winDisplay').style.color = '#00ff88';
+  } else {
+    document.getElementById('winDisplay').textContent = 'NO WIN';
+    document.getElementById('winDisplay').style.color = '#ff6666';
+  }
+  
+  isSpinning = false;
+  
+  // Show replay again button
+  showReplayAgainButton();
+}
+
+function showReplayAgainButton() {
+  if (!isReplayMode) return;
+  
+  // Enable spin button as "Replay Again"
+  const spinBtn = document.getElementById('spinBtn');
+  spinBtn.textContent = '🔄 REPLAY AGAIN';
+  spinBtn.disabled = false;
+  spinBtn.onclick = function() {
+    spinWithSeed(parseInt(replaySeed));
+  };
+}
+
+init();
+</script>
+</body>
+</html>

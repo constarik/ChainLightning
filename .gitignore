@@ -1,0 +1,20 @@
+# Build output
+target/
+out/
+*.class
+
+# IDE
+.idea/
+*.iml
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Large files
+*.mp4
+*.zip
+*.7z
