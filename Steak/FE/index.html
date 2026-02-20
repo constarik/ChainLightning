@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>⚡ Lightning Surge v1.25 ⚡</title></title>
+  <title>⚡ Lightning Surge v1.26 ⚡</title></title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     
@@ -757,7 +757,7 @@
 </head>
 <body>
   <h1>⚡LIGHTNING SURGE⚡</h1>
-  <div style="position:fixed;bottom:10px;right:10px;font-size:16px;color:#ff0;background:#000;padding:5px 10px;border-radius:5px;z-index:9999;">v1.25</div>
+  <div style="position:fixed;bottom:10px;right:10px;font-size:16px;color:#ff0;background:#000;padding:5px 10px;border-radius:5px;z-index:9999;">v1.26</div>
   
   <div id="replayBanner" class="replay-banner" style="display: none;">
     🔄 REPLAY MODE
@@ -2057,27 +2057,24 @@ async function replayWithEvent(eventId) {
     return;
   }
   
-  // Extract game state from replay response
-  // The state contains: grid, strikes, chains, totalWin, wildMode
-  const state = replayData.state || replayData;
+  // Extract seed from replay response
+  // Response may be {state: [...]} or {round: {state: [...]}}
+  const state = replayData.round?.state || replayData.state || [];
+  const seedObj = state[0] || {};
+  const seed = seedObj.seed;
+  
   console.log('[Replay] State:', state);
+  console.log('[Replay] Seed:', seed);
   
-  // Build result object from replay state
-  const result = {
-    grid: state.grid,
-    strikes: state.strikes || [],
-    misses: state.misses || [],
-    chains: state.chains || [],
-    totalWin: state.totalWin || 0,
-    wildMode: state.wildMode || false,
-    betAmount: currentBetAmount
-  };
+  if (!seed) {
+    showError('No seed in replay data');
+    isSpinning = false;
+    return;
+  }
   
-  // Set grid from replay data
-  grid = result.grid;
-  renderGrid();
+  // Use seed to recalculate the round deterministically
+  const result = calculateRound(currentBetAmount, seed);
   
-  // Animate the replay
   await animateRound(result);
   
   if (result.totalWin > 0) {
