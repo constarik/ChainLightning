@@ -165,10 +165,26 @@ function doSpin() {
 }
 
 // --- Routes ---
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  next();
+});
 app.use(express.static(path.join(__dirname, 'web')));
 
 app.get('/api/config', (req, res) => {
-  res.json(CONFIG);
+  res.json({
+    rows: CONFIG.grid.rows,
+    cols: CONFIG.grid.cols,
+    bet: CONFIG.bet,
+    symbolNames: CONFIG.symbols.names,
+    symbolWeights: CONFIG.symbols.weights,
+    wildProb: CONFIG.lightning.wildProb,
+    strikesPerSpin: CONFIG.lightning.strikesPerSpin,
+    multipliers: CONFIG.lightning.multipliers,
+    minWildsForMode: CONFIG.wildMode.minWilds,
+    wildModeMultiplier: CONFIG.wildMode.multiplier,
+    paytable: CONFIG.paytable
+  });
 });
 
 app.get('/api/spin', (req, res) => {
