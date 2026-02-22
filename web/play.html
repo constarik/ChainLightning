@@ -154,6 +154,19 @@
       box-shadow: 0 0 12px #00d4ff;
     }
     
+    .chain-num {
+      position: absolute;
+      top: 2px;
+      right: 4px;
+      font-size: 11px;
+      font-weight: bold;
+      color: #fff;
+      text-shadow: 0 0 3px #000, 0 0 6px #000;
+      pointer-events: none;
+      z-index: 2;
+      line-height: 1;
+    }
+    
     @keyframes strike {
       0% { transform: scale(1); }
       50% { transform: scale(1.15); background: #fff; }
@@ -515,9 +528,14 @@ async function spinLocal() {
   // Animate chains
   const chainListEl = document.getElementById('chainList');
   for (const ch of chains) {
-    for (const [r, c] of ch.path) {
+    for (let i = 0; i < ch.path.length; i++) {
+      const [r, c] = ch.path[i];
       const cell = document.getElementById(`cell-${r}-${c}`);
       cell.classList.add('struck', 'chain');
+      const numEl = document.createElement('span');
+      numEl.className = 'chain-num';
+      numEl.textContent = i + 1;
+      cell.appendChild(numEl);
       await sleep(50);
     }
     
@@ -556,9 +574,14 @@ async function spinServer() {
     
     const chainListEl = document.getElementById('chainList');
     for (const ch of data.chains) {
-      for (const cell of ch.path) {
+      for (let i = 0; i < ch.path.length; i++) {
+        const cell = ch.path[i];
         const cellEl = document.getElementById(`cell-${cell[0]}-${cell[1]}`);
         cellEl.classList.add('struck', 'chain');
+        const numEl = document.createElement('span');
+        numEl.className = 'chain-num';
+        numEl.textContent = i + 1;
+        cellEl.appendChild(numEl);
         await sleep(50);
       }
       
