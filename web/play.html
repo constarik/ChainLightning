@@ -657,18 +657,18 @@ async function switchMode() {
       const response = await fetch(`${serverUrl}/api/config`);
       const config = await response.json();
       
-      // Update CONFIG from server
-      CONFIG.grid.rows = config.rows;
-      CONFIG.grid.cols = config.cols;
-      CONFIG.bet = config.bet;
-      CONFIG.symbols.names = config.symbolNames;
-      CONFIG.symbols.weights = config.symbolWeights;
-      CONFIG.lightning.wildProb = config.wildProb;
-      CONFIG.lightning.strikesPerSpin = config.strikesPerSpin;
-      CONFIG.lightning.multipliers = config.multipliers;
-      CONFIG.wildMode.minWilds = config.minWildsForMode;
-      CONFIG.wildMode.multiplier = config.wildModeMultiplier;
-      CONFIG.paytable = config.paytable;
+      // Update CONFIG from server (support both flat and nested formats)
+      CONFIG.grid.rows = config.rows || config.grid?.rows || CONFIG.grid.rows;
+      CONFIG.grid.cols = config.cols || config.grid?.cols || CONFIG.grid.cols;
+      CONFIG.bet = config.bet || CONFIG.bet;
+      CONFIG.symbols.names = config.symbolNames || config.symbols?.names || CONFIG.symbols.names;
+      CONFIG.symbols.weights = config.symbolWeights || config.symbols?.weights || CONFIG.symbols.weights;
+      CONFIG.lightning.wildProb = config.wildProb || config.lightning?.wildProb || CONFIG.lightning.wildProb;
+      CONFIG.lightning.strikesPerSpin = config.strikesPerSpin || config.lightning?.strikesPerSpin || CONFIG.lightning.strikesPerSpin;
+      CONFIG.lightning.multipliers = config.multipliers || config.lightning?.multipliers || CONFIG.lightning.multipliers;
+      CONFIG.wildMode.minWilds = config.minWildsForMode || config.wildMode?.minWilds || CONFIG.wildMode.minWilds;
+      CONFIG.wildMode.multiplier = config.wildModeMultiplier || config.wildMode?.multiplier || CONFIG.wildMode.multiplier;
+      CONFIG.paytable = config.paytable || CONFIG.paytable;
       
       document.getElementById('betDisplay').textContent = CONFIG.bet;
       
