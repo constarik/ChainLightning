@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chain Lightning v1.4 - Play</title>
+  <title>Chain Lightning v1.5 - Play</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     
@@ -243,7 +243,7 @@
 </head>
 <body>
   <h1>⚡ CHAIN LIGHTNING ⚡</h1>
-  <div style="font-size:0.75rem; color:#888; margin-bottom:6px; letter-spacing:1px;">v1.4</div>
+  <div style="font-size:0.75rem; color:#888; margin-bottom:6px; letter-spacing:1px;">v1.5</div>
   
   <div class="mode-switch">
     <label>Mode:</label>
@@ -296,9 +296,6 @@
       <h3 style="color:#ffd700; margin:20px 0 8px;">Wild Mode</h3>
       <p style="color:#ccc; line-height:1.6;">Если на поле 3 или более символов ⚡ Wild — активируется Wild Mode. В этом режиме каждый Wild становится стартом цепочки и применяется множитель ×5 ко всем выплатам. Wild может входить в любую цепочку как любой символ.</p>
 
-      <h3 style="color:#ffd700; margin:20px 0 8px;">Множители по длине цепочки</h3>
-      <div id="multGrid" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;"></div>
-
       <h3 style="color:#ffd700; margin:20px 0 8px;">Paytable (выплаты × ставка)</h3>
       <table id="paytableTable" style="width:100%; border-collapse:collapse; font-size:0.85rem;">
         <thead>
@@ -309,7 +306,9 @@
             <th style="padding:6px;">5</th>
             <th style="padding:6px;">6</th>
             <th style="padding:6px;">7</th>
-            <th style="padding:6px;">8+</th>
+            <th style="padding:6px;">8</th>
+            <th style="padding:6px;">9</th>
+            <th style="padding:6px;">10+</th>
           </tr>
         </thead>
         <tbody id="paytableBody"></tbody>
@@ -737,29 +736,26 @@ async function switchMode() {
 }
 
 function showInfo() {
-  // Build multipliers grid
-  const multGrid = document.getElementById('multGrid');
-  multGrid.innerHTML = CONFIG.lightning.multipliers.slice(2).map((m, i) =>
-    `<div style="background:#0f3460;border:1px solid #00d4ff;border-radius:6px;padding:6px 10px;text-align:center;">
-      <div style="color:#aaa;font-size:0.75rem;">${i === 7 ? 'len 10+' : 'len ' + (i+3)}</div>
-      <div style="color:#00d4ff;font-weight:bold;">×${m}</div>
-    </div>`
-  ).join('');
-
-  // Build paytable
+  // Build paytable with combined basePay × multiplier values
+  // lengths 3..10, where 10+ uses multipliers[9]
   const body = document.getElementById('paytableBody');
   body.innerHTML = '';
   const names = CONFIG.symbols.names;
   const emojis = CONFIG.symbols.emojis;
+  const mults = CONFIG.lightning.multipliers; // [1,2,3,4,5,6,7,8,9,10]
+  const lengths = [3, 4, 5, 6, 7, 8, 9, 10]; // len 10 = 10+
   for (let sym = 1; sym <= 9; sym++) {
     const pays = CONFIG.paytable[sym];
     if (!pays) continue;
     const tr = document.createElement('tr');
     tr.style.borderTop = '1px solid #333';
-    tr.innerHTML = `
-      <td style="padding:6px;">${emojis[sym]} ${names[sym]}</td>
-      ${pays.map(p => `<td style="padding:6px; text-align:center; color:#ffd700;">${p}</td>`).join('')}
-    `;
+    const cells = lengths.map(len => {
+      const payIdx = Math.min(len - 3, pays.length - 1);
+      const multIdx = Math.min(len - 1, mults.length - 1);
+      const val = pays[payIdx] * mults[multIdx];
+      return `<td style="padding:6px; text-align:center; color:#ffd700;">${val}</td>`;
+    }).join('');
+    tr.innerHTML = `<td style="padding:6px;">${emojis[sym]} ${names[sym]}</td>${cells}`;
     body.appendChild(tr);
   }
   document.getElementById('infoModal').style.display = 'block';
