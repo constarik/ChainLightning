@@ -238,6 +238,38 @@
     
     .server-status.connected { color: #4f4; }
     .server-status.disconnected { color: #f44; }
+
+    .debug-panel {
+      width: 200px;
+      background: rgba(0,0,0,0.4);
+      border: 1px solid #ff6b00;
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 0.8rem;
+      color: #ccc;
+    }
+    .debug-panel h3 {
+      color: #ff6b00;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+      letter-spacing: 1px;
+    }
+    .debug-panel label { color: #888; display: block; margin-top: 8px; margin-bottom: 2px; }
+    .debug-panel input {
+      width: 100%; background: #111; border: 1px solid #444; color: #fff;
+      padding: 4px 6px; border-radius: 4px; font-size: 0.8rem;
+    }
+    .debug-panel button {
+      width: 100%; margin-top: 8px; padding: 6px;
+      border: none; border-radius: 5px; cursor: pointer;
+      font-size: 0.8rem; font-weight: bold;
+    }
+    .debug-run { background: #ff6b00; color: #fff; }
+    .debug-stop { background: #555; color: #ccc; }
+    .debug-result { margin-top: 10px; line-height: 1.8; }
+    .debug-result span { color: #ffd700; font-weight: bold; }
+    .debug-progress { color: #888; font-size: 0.75rem; margin-top: 6px; }
   </style>
 </head>
 <body>
@@ -272,6 +304,18 @@
       <div class="grid-container">
         <div class="grid" id="grid"></div>
       </div>
+    </div>
+
+    <div class="debug-panel" id="debugPanel" style="display:none;">
+      <h3>⚙ Debug</h3>
+      <label>Spins</label>
+      <input type="number" id="dbgSpins" value="100000" min="1000" step="1000">
+      <label>Seed (empty = time)</label>
+      <input type="text" id="dbgSeed" placeholder="e.g. 12345">
+      <button class="debug-run" id="dbgRunBtn" onclick="dbgRun()">▶ RUN</button>
+      <button class="debug-stop" id="dbgStopBtn" onclick="dbgStop()" style="display:none;">■ STOP</button>
+      <div class="debug-progress" id="dbgProgress"></div>
+      <div class="debug-result" id="dbgResult"></div>
     </div>
   </div>
   
@@ -768,6 +812,160 @@ function closeInfo() {
 document.getElementById('infoModal').addEventListener('click', function(e) {
   if (e.target === this) closeInfo();
 });
+
+// ===== DEBUG SIMULATION =====
+let dbgRunning = false;
+
+function dbgLCG(seed) {
+  let s = seed >>> 0;
+  return () => {
+    s = (Math.imul(1664525, s) + 1013904223) >>> 0;
+    return s / 4294967296;
+  };
+}
+
+function dbgPickSymbol(rng) {
+  let roll = rng() * totalWeight;
+  for (let i = 1; i < CONFIG.symbols.weights.length; i++) {
+    roll -= CONFIG.symbols.weights[i];
+    if (roll <= 0) return i;
+  }
+  return CONFIG.symbols.weights.length - 1;
+}
+
+function dbgGenGrid(rng) {
+  const g = [];
+  for (let r = 0; r < CONFIG.grid.rows; r++) {
+    const row = [];
+    for (let c = 0; c < CONFIG.grid.cols; c++) {
+      row.push(rng() < CONFIG.lightning.wildProb ? 0 : dbgPickSymbol(rng));
+    }
+    g.push(row);
+  }
+  return g;
+}
+
+function dbgTraceBFS(g, startR, startC, used) {
+  const sym = g[startR][startC];
+  if (sym === 0 || used.has(`${startR},${startC}`)) return null;
+  const path = [];
+  const queue = [[startR, startC]];
+  const visited = new Set([`${startR},${startC}`]);
+  while (queue.length) {
+    const [r, c] = queue.shift();
+    if (used.has(`${r},${c}`)) continue;
+    path.push([r, c]);
+    for (let dr = -1; dr <= 1; dr++) {
+      for (let dc = -1; dc <= 1; dc++) {
+        if (!dr && !dc) continue;
+        const nr = r+dr, nc = c+dc;
+        if (nr>=0 && nr<CONFIG.grid.rows && nc>=0 && nc<CONFIG.grid.cols) {
+          const key = `${nr},${nc}`;
+          if (!visited.has(key) && (g[nr][nc] === sym || g[nr][nc] === 0)) {
+            visited.add(key);
+            queue.push([nr, nc]);
+          }
+        }
+      }
+    }
+  }
+  return path;
+}
+
+function dbgSpinOnce(rng) {
+  const g = dbgGenGrid(rng);
+  const used = new Set();
+  const wilds = [];
+  for (let r = 0; r < CONFIG.grid.rows; r++)
+    for (let c = 0; c < CONFIG.grid.cols; c++)
+      if (g[r][c] === 0) wilds.push([r, c]);
+
+  const isWildMode = wilds.length >= CONFIG.wildMode.minWilds;
+  const wildMult = isWildMode ? CONFIG.wildMode.multiplier : 1;
+  let totalWin = 0;
+
+  const strikes = isWildMode ? wilds : Array.from({length: CONFIG.lightning.strikesPerSpin}, () => {
+    let r, c;
+    do { r = Math.floor(rng() * CONFIG.grid.rows); c = Math.floor(rng() * CONFIG.grid.cols); }
+    while (g[r][c] === 0);
+    return [r, c];
+  });
+
+  for (const [sr, sc] of strikes) {
+    const path = dbgTraceBFS(g, sr, sc, used);
+    if (!path || path.length < 3) continue;
+    path.forEach(([r,c]) => used.add(`${r},${c}`));
+    const sym = g[sr][sc];
+    const pays = CONFIG.paytable[sym];
+    if (!pays) continue;
+    const payIdx = Math.min(path.length - 3, pays.length - 1);
+    const multIdx = Math.min(path.length - 1, CONFIG.lightning.multipliers.length - 1);
+    totalWin += pays[payIdx] * CONFIG.lightning.multipliers[multIdx] * wildMult;
+  }
+  return { win: totalWin, hit: totalWin > 0, wildMode: isWildMode };
+}
+
+function dbgUpdateResult(spins, totalWin, hits, wildModes, wins) {
+  const rtp = (totalWin / (spins * CONFIG.bet) * 100).toFixed(2);
+  const hitRate = (hits / spins * 100).toFixed(2);
+  const wildFreq = (wildModes / spins * 100).toFixed(2);
+  const mean = totalWin / spins;
+  const variance = wins.reduce((s, w) => s + (w - mean) ** 2, 0) / wins.length;
+  const sigma = (Math.sqrt(variance) / CONFIG.bet).toFixed(2);
+  document.getElementById('dbgResult').innerHTML =
+    `RTP: <span>${rtp}%</span><br>` +
+    `Hit Rate: <span>${hitRate}%</span><br>` +
+    `Volatility σ: <span>${sigma}</span><br>` +
+    `Wild Mode: <span>${wildFreq}%</span>`;
+}
+
+async function dbgRun() {
+  const n = parseInt(document.getElementById('dbgSpins').value) || 100000;
+  const seedVal = document.getElementById('dbgSeed').value.trim();
+  const seed = seedVal ? parseInt(seedVal) : Math.floor(Date.now() / 1000);
+  const rng = dbgLCG(seed);
+
+  document.getElementById('dbgRunBtn').style.display = 'none';
+  document.getElementById('dbgStopBtn').style.display = 'block';
+  document.getElementById('dbgResult').innerHTML = '';
+  document.getElementById('dbgProgress').textContent = `Seed: ${seed}`;
+  dbgRunning = true;
+
+  let totalWin = 0, hits = 0, wildModes = 0;
+  const wins = [];
+  const CHUNK = 1000;
+
+  for (let i = 0; i < n && dbgRunning; i++) {
+    const { win, hit, wildMode } = dbgSpinOnce(rng);
+    totalWin += win;
+    wins.push(win);
+    if (hit) hits++;
+    if (wildMode) wildModes++;
+
+    if ((i + 1) % CHUNK === 0) {
+      document.getElementById('dbgProgress').textContent = `${i+1} / ${n} | Seed: ${seed}`;
+      dbgUpdateResult(i+1, totalWin, hits, wildModes, wins);
+      await new Promise(r => setTimeout(r, 0));
+    }
+  }
+
+  if (dbgRunning) {
+    document.getElementById('dbgProgress').textContent = `Done: ${n} spins | Seed: ${seed}`;
+    dbgUpdateResult(n, totalWin, hits, wildModes, wins);
+  }
+  dbgRunning = false;
+  document.getElementById('dbgRunBtn').style.display = 'block';
+  document.getElementById('dbgStopBtn').style.display = 'none';
+}
+
+function dbgStop() {
+  dbgRunning = false;
+}
+
+// Show debug panel if ?debug=17
+if (new URLSearchParams(window.location.search).get('debug') === '17') {
+  document.getElementById('debugPanel').style.display = 'block';
+}
 
 // Init
 initWeights();
