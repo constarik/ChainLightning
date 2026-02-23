@@ -604,7 +604,7 @@ async function spinServer() {
 async function spin() {
   if (isSpinning || balance < CONFIG.bet) return;
   isSpinning = true;
-  document.getElementById('spinBtn').disabled = true;
+  if (!isAutoMode) document.getElementById('spinBtn').disabled = true;
   
   spinNumber++;
   document.getElementById('spinCount').textContent = spinNumber;
@@ -635,7 +635,7 @@ async function spin() {
   }
   
   isSpinning = false;
-  document.getElementById('spinBtn').disabled = false;
+  if (!isAutoMode) document.getElementById('spinBtn').disabled = false;
   
   if (isAutoMode && balance >= CONFIG.bet) {
     await sleep(300);
@@ -653,6 +653,7 @@ function toggleAuto() {
   } else {
     btn.textContent = 'AUTO';
     btn.classList.remove('stop');
+    document.getElementById('spinBtn').disabled = false;
   }
 }
 
