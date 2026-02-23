@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chain Lightning v1.3 - Play</title>
+  <title>Chain Lightning v1.4 - Play</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     
@@ -243,7 +243,7 @@
 </head>
 <body>
   <h1>⚡ CHAIN LIGHTNING ⚡</h1>
-  <div style="font-size:0.75rem; color:#888; margin-bottom:6px; letter-spacing:1px;">v1.3</div>
+  <div style="font-size:0.75rem; color:#888; margin-bottom:6px; letter-spacing:1px;">v1.4</div>
   
   <div class="mode-switch">
     <label>Mode:</label>
@@ -739,9 +739,9 @@ async function switchMode() {
 function showInfo() {
   // Build multipliers grid
   const multGrid = document.getElementById('multGrid');
-  multGrid.innerHTML = CONFIG.lightning.multipliers.map((m, i) =>
+  multGrid.innerHTML = CONFIG.lightning.multipliers.slice(2).map((m, i) =>
     `<div style="background:#0f3460;border:1px solid #00d4ff;border-radius:6px;padding:6px 10px;text-align:center;">
-      <div style="color:#aaa;font-size:0.75rem;">len ${i+1}</div>
+      <div style="color:#aaa;font-size:0.75rem;">${i === 7 ? 'len 10+' : 'len ' + (i+3)}</div>
       <div style="color:#00d4ff;font-weight:bold;">×${m}</div>
     </div>`
   ).join('');
