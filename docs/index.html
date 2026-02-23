@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chain Lightning v1.2 - Play</title>
+  <title>Chain Lightning v1.3 - Play</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     
@@ -243,7 +243,7 @@
 </head>
 <body>
   <h1>⚡ CHAIN LIGHTNING ⚡</h1>
-  <div style="font-size:0.75rem; color:#888; margin-bottom:6px; letter-spacing:1px;">v1.2</div>
+  <div style="font-size:0.75rem; color:#888; margin-bottom:6px; letter-spacing:1px;">v1.3</div>
   
   <div class="mode-switch">
     <label>Mode:</label>
@@ -281,6 +281,40 @@
   <div class="controls">
     <button id="spinBtn" onclick="spin()">⚡ SPIN ⚡</button>
     <button id="autoBtn" onclick="toggleAuto()">AUTO</button>
+    <button onclick="showInfo()">ℹ️ INFO</button>
+  </div>
+
+  <!-- INFO MODAL -->
+  <div id="infoModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:1000; overflow-y:auto;">
+    <div style="max-width:700px; margin:40px auto; background:#1a1a2e; border:1px solid #00d4ff; border-radius:12px; padding:30px; color:#fff; position:relative;">
+      <button onclick="closeInfo()" style="position:absolute; top:15px; right:15px; background:#333; border:none; color:#fff; font-size:1.2rem; width:32px; height:32px; border-radius:50%; cursor:pointer;">✕</button>
+      <h2 style="color:#00d4ff; text-align:center; margin-bottom:20px; letter-spacing:2px;">⚡ CHAIN LIGHTNING — INFO ⚡</h2>
+
+      <h3 style="color:#ffd700; margin:20px 0 8px;">Как работают цепочки</h3>
+      <p style="color:#ccc; line-height:1.6;">Каждый спин делается 3 удара молнии. Каждый удар выбирает случайную клетку и строит цепочку из соседних клеток с одинаковым символом (включая диагонали). Цепочка длиной 3+ даёт выплату. Выплата = BasePay × Multiplier.</p>
+
+      <h3 style="color:#ffd700; margin:20px 0 8px;">Wild Mode</h3>
+      <p style="color:#ccc; line-height:1.6;">Если на поле 3 или более символов ⚡ Wild — активируется Wild Mode. В этом режиме каждый Wild становится стартом цепочки и применяется множитель ×5 ко всем выплатам. Wild может входить в любую цепочку как любой символ.</p>
+
+      <h3 style="color:#ffd700; margin:20px 0 8px;">Множители по длине цепочки</h3>
+      <div id="multGrid" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:8px;"></div>
+
+      <h3 style="color:#ffd700; margin:20px 0 8px;">Paytable (выплаты × ставка)</h3>
+      <table id="paytableTable" style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+        <thead>
+          <tr style="color:#00d4ff;">
+            <th style="padding:6px; text-align:left;">Символ</th>
+            <th style="padding:6px;">3</th>
+            <th style="padding:6px;">4</th>
+            <th style="padding:6px;">5</th>
+            <th style="padding:6px;">6</th>
+            <th style="padding:6px;">7</th>
+            <th style="padding:6px;">8+</th>
+          </tr>
+        </thead>
+        <tbody id="paytableBody"></tbody>
+      </table>
+    </div>
   </div>
 
 <script>
@@ -701,6 +735,44 @@ async function switchMode() {
     statusEl.textContent = '';
   }
 }
+
+function showInfo() {
+  // Build multipliers grid
+  const multGrid = document.getElementById('multGrid');
+  multGrid.innerHTML = CONFIG.lightning.multipliers.map((m, i) =>
+    `<div style="background:#0f3460;border:1px solid #00d4ff;border-radius:6px;padding:6px 10px;text-align:center;">
+      <div style="color:#aaa;font-size:0.75rem;">len ${i+1}</div>
+      <div style="color:#00d4ff;font-weight:bold;">×${m}</div>
+    </div>`
+  ).join('');
+
+  // Build paytable
+  const body = document.getElementById('paytableBody');
+  body.innerHTML = '';
+  const names = CONFIG.symbols.names;
+  const emojis = CONFIG.symbols.emojis;
+  for (let sym = 1; sym <= 9; sym++) {
+    const pays = CONFIG.paytable[sym];
+    if (!pays) continue;
+    const tr = document.createElement('tr');
+    tr.style.borderTop = '1px solid #333';
+    tr.innerHTML = `
+      <td style="padding:6px;">${emojis[sym]} ${names[sym]}</td>
+      ${pays.map(p => `<td style="padding:6px; text-align:center; color:#ffd700;">${p}</td>`).join('')}
+    `;
+    body.appendChild(tr);
+  }
+  document.getElementById('infoModal').style.display = 'block';
+}
+
+function closeInfo() {
+  document.getElementById('infoModal').style.display = 'none';
+}
+
+// Close on backdrop click
+document.getElementById('infoModal').addEventListener('click', function(e) {
+  if (e.target === this) closeInfo();
+});
 
 // Init
 initWeights();
