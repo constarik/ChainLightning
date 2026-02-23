@@ -70,12 +70,11 @@
     .main-area {
       display: flex;
       gap: 20px;
-      align-items: center;
+      align-items: stretch;
     }
     
     .left-panel {
       width: 180px;
-      min-height: 300px;
       background: rgba(0,0,0,0.3);
       border-radius: 10px;
       padding: 12px;
@@ -268,7 +267,7 @@
       <div class="chain-list" id="chainList"></div>
     </div>
     
-    <div>
+    <div style="display:flex; flex-direction:column; justify-content:space-between;">
       <div class="wild-mode-banner" id="wildModeBanner"></div>
       <div class="grid-container">
         <div class="grid" id="grid"></div>
