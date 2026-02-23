@@ -258,7 +258,7 @@
     <div class="stat">Bet: <span class="stat-value" id="betDisplay">100</span></div>
     <div class="stat">Spin: <span class="stat-value" id="spinCount">0</span></div>
     <div class="stat">3+ Wilds: <span class="stat-value" id="wildModeCount">0</span></div>
-    <div class="stat">Mult: <span class="stat-value" id="currentMult">×1</span></div>
+    <div class="stat">Win: <span class="stat-value" id="lastWin">—</span></div>
   </div>
   
   <div class="main-area">
@@ -471,8 +471,7 @@ async function spinLocal() {
   if (isWildMode) {
     wildModeCount++;
     document.getElementById('wildModeCount').textContent = wildModeCount;
-    document.getElementById('currentMult').textContent = `×${wildMultiplier}`;
-    document.getElementById('currentMult').style.color = '#ffd700';
+
     document.getElementById('wildModeBanner').textContent = `⚡ ${wilds.length} WILDS — ×${wildMultiplier} MODE! ⚡`;
     await sleep(400);
     
@@ -518,11 +517,7 @@ async function spinLocal() {
       }
     }
     
-    if (chains.length > 0) {
-      const lastMult = chains[chains.length - 1].mult;
-      document.getElementById('currentMult').textContent = `×${lastMult}`;
-      document.getElementById('currentMult').style.color = '#00d4ff';
-    }
+
   }
   
   // Animate chains
@@ -566,8 +561,7 @@ async function spinServer() {
     if (data.wildMode) {
       wildModeCount++;
       document.getElementById('wildModeCount').textContent = wildModeCount;
-      document.getElementById('currentMult').textContent = `×${data.wildModeMultiplier}`;
-      document.getElementById('currentMult').style.color = '#ffd700';
+
       document.getElementById('wildModeBanner').textContent = `⚡ ${data.wildCount} WILDS — ×${data.wildModeMultiplier} MODE! ⚡`;
       await sleep(400);
     }
@@ -596,11 +590,7 @@ async function spinServer() {
       await sleep(200);
     }
     
-    if (!data.wildMode && data.chains.length > 0) {
-      const lastMult = data.chains[data.chains.length - 1].mult;
-      document.getElementById('currentMult').textContent = `×${lastMult}`;
-      document.getElementById('currentMult').style.color = '#00d4ff';
-    }
+
     
     return data.totalWin;
     
@@ -623,6 +613,7 @@ async function spin() {
   balance -= CONFIG.bet;
   updateBalance();
   document.getElementById('winDisplay').textContent = '';
+  document.getElementById('lastWin').textContent = '—';
   document.getElementById('chainList').innerHTML = '';
   document.getElementById('wildModeBanner').textContent = '';
   
@@ -638,8 +629,10 @@ async function spin() {
     balance += totalWin;
     updateBalance();
     document.getElementById('winDisplay').textContent = `WIN: ${totalWin}`;
+    document.getElementById('lastWin').textContent = totalWin;
   } else {
     document.getElementById('chainList').innerHTML = '<div class="no-win">NO WIN</div>';
+    document.getElementById('lastWin').textContent = '0';
   }
   
   isSpinning = false;
