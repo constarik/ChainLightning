@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chain Lightning v1.8 - Play</title>
+  <title>Chain Lightning v1.9 - Play</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     
@@ -274,7 +274,7 @@
 </head>
 <body>
   <h1>⚡ CHAIN LIGHTNING ⚡</h1>
-  <div style="font-size:0.75rem; color:#888; margin-bottom:6px; letter-spacing:1px;">v1.8</div>
+  <div style="font-size:0.75rem; color:#888; margin-bottom:6px; letter-spacing:1px;">v1.9</div>
   
   <div class="mode-switch">
     <label>Mode:</label>
@@ -845,31 +845,45 @@ function dbgGenGrid(rng) {
   return g;
 }
 
-function dbgTraceBFS(g, startR, startC, used) {
-  const sym = g[startR][startC];
-  if (sym === 0 || used.has(`${startR},${startC}`)) return null;
-  const path = [];
-  const queue = [[startR, startC]];
-  const visited = new Set([`${startR},${startC}`]);
-  while (queue.length) {
-    const [r, c] = queue.shift();
-    if (used.has(`${r},${c}`)) continue;
-    path.push([r, c]);
-    for (let dr = -1; dr <= 1; dr++) {
-      for (let dc = -1; dc <= 1; dc++) {
-        if (!dr && !dc) continue;
-        const nr = r+dr, nc = c+dc;
-        if (nr>=0 && nr<CONFIG.grid.rows && nc>=0 && nc<CONFIG.grid.cols) {
-          const key = `${nr},${nc}`;
-          if (!visited.has(key) && (g[nr][nc] === sym || g[nr][nc] === 0)) {
-            visited.add(key);
-            queue.push([nr, nc]);
-          }
-        }
-      }
+function dbgGetNeighbors(r, c) {
+  const nb = [];
+  for (let dr = -1; dr <= 1; dr++)
+    for (let dc = -1; dc <= 1; dc++) {
+      if (!dr && !dc) continue;
+      const nr = r+dr, nc = c+dc;
+      if (nr>=0 && nr<CONFIG.grid.rows && nc>=0 && nc<CONFIG.grid.cols) nb.push([nr,nc]);
     }
+  return nb;
+}
+
+function dbgTraceChain(g, startR, startC, used, rng) {
+  const sym = g[startR][startC];
+  if (sym === 0 || used.has(`${startR},${startC}`)) return { length: 0, symbol: 0 };
+  const visited = new Set([`${startR},${startC}`]);
+  const path = [[startR, startC]];
+  let cur = [startR, startC];
+  while (true) {
+    const candidates = dbgGetNeighbors(cur[0], cur[1]).filter(([nr,nc]) => {
+      const k = `${nr},${nc}`;
+      return !visited.has(k) && !used.has(k) && (g[nr][nc] === sym || g[nr][nc] === 0);
+    });
+    if (!candidates.length) break;
+    const next = candidates[Math.floor(rng() * candidates.length)];
+    visited.add(`${next[0]},${next[1]}`);
+    path.push(next);
+    cur = next;
   }
-  return path;
+  return { length: path.length, symbol: sym, path };
+}
+
+function dbgTraceChainFromWild(g, wr, wc, used, rng) {
+  let best = { length: 0, symbol: 0, path: [] };
+  for (const [nr, nc] of dbgGetNeighbors(wr, wc)) {
+    if (used.has(`${nr},${nc}`) || g[nr][nc] === 0) continue;
+    const chain = dbgTraceChain(g, nr, nc, used, rng);
+    if (chain.length > best.length) best = chain;
+  }
+  return best;
 }
 
 function dbgSpinOnce(rng) {
@@ -884,23 +898,34 @@ function dbgSpinOnce(rng) {
   const wildMult = isWildMode ? CONFIG.wildMode.multiplier : 1;
   let totalWin = 0;
 
-  const strikes = isWildMode ? wilds : Array.from({length: CONFIG.lightning.strikesPerSpin}, () => {
-    let r, c;
-    do { r = Math.floor(rng() * CONFIG.grid.rows); c = Math.floor(rng() * CONFIG.grid.cols); }
-    while (g[r][c] === 0);
-    return [r, c];
-  });
-
-  for (const [sr, sc] of strikes) {
-    const path = dbgTraceBFS(g, sr, sc, used);
-    if (!path || path.length < 3) continue;
-    path.forEach(([r,c]) => used.add(`${r},${c}`));
-    const sym = g[sr][sc];
-    const pays = CONFIG.paytable[sym];
-    if (!pays) continue;
-    const payIdx = Math.min(path.length - 3, pays.length - 1);
-    const multIdx = Math.min(path.length - 1, CONFIG.lightning.multipliers.length - 1);
-    totalWin += pays[payIdx] * CONFIG.lightning.multipliers[multIdx] * wildMult;
+  if (isWildMode) {
+    for (const [wr, wc] of wilds) {
+      if (used.has(`${wr},${wc}`)) continue;
+      const chain = dbgTraceChainFromWild(g, wr, wc, used, rng);
+      if (chain.length >= 3 && chain.symbol > 0) {
+        chain.path.forEach(([r,c]) => used.add(`${r},${c}`));
+        used.add(`${wr},${wc}`);
+        const pays = CONFIG.paytable[chain.symbol];
+        const payIdx = Math.min(chain.length - 3, pays.length - 1);
+        const multIdx = Math.min(chain.length - 1, CONFIG.lightning.multipliers.length - 1);
+        totalWin += pays[payIdx] * CONFIG.lightning.multipliers[multIdx] * wildMult;
+      }
+    }
+  } else {
+    for (let i = 0; i < CONFIG.lightning.strikesPerSpin; i++) {
+      let r, c;
+      do { r = Math.floor(rng() * CONFIG.grid.rows); c = Math.floor(rng() * CONFIG.grid.cols); }
+      while (g[r][c] === 0);
+      const chain = dbgTraceChain(g, r, c, used, rng);
+      if (chain.length >= 3) {
+        chain.path.forEach(([pr,pc]) => used.add(`${pr},${pc}`));
+        const pays = CONFIG.paytable[chain.symbol];
+        if (!pays) continue;
+        const payIdx = Math.min(chain.length - 3, pays.length - 1);
+        const multIdx = Math.min(chain.length - 1, CONFIG.lightning.multipliers.length - 1);
+        totalWin += pays[payIdx] * CONFIG.lightning.multipliers[multIdx];
+      }
+    }
   }
   return { win: totalWin, hit: totalWin > 0, wildMode: isWildMode };
 }
